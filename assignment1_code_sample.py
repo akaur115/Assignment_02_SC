@@ -1,7 +1,7 @@
-import subprocess
+import os
 import pymysql
 import requests
-import os
+import subprocess
 
 db_config = {
     'host': 'mydatabase.com',
