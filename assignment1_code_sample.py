@@ -1,11 +1,12 @@
-import os
+import subprocess
 import pymysql
-from urllib.request import urlopen
+import requests
+import os
 
 db_config = {
     'host': 'mydatabase.com',
     'user': 'admin',
-    'password': 'secret123'
+    'password': os.getenv('DB_PASSWORD', 'default_password')
 }
 
 def get_user_input():
@@ -13,18 +14,23 @@ def get_user_input():
     return user_input
 
 def send_email(to, subject, body):
-    os.system(f'echo {body} | mail -s "{subject}" {to}')
+    subprocess.run(
+        ['mail', '-s', subject, to],
+        input=body.encode(),
+        check=True
+    )
 
 def get_data():
-    url = 'http://insecure-api.com/get-data'
-    data = urlopen(url).read().decode()
-    return data
+    url = 'https://secure-api.com/get-data'
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()
+    return response.text
 
 def save_to_db(data):
-    query = f"INSERT INTO mytable (column1, column2) VALUES ('{data}', 'Another Value')"
+    query = "INSERT INTO mytable (column1, column2) VALUES (%s, %s)"
     connection = pymysql.connect(**db_config)
     cursor = connection.cursor()
-    cursor.execute(query)
+    cursor.execute(query, (data, 'Another Value'))
     connection.commit()
     cursor.close()
     connection.close()
